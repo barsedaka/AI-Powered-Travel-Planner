@@ -1,6 +1,5 @@
 package com.bar.travelplanner.service.impl;
 
-import com.bar.travelplanner.utils.constants.Constants;
 import com.bar.travelplanner.dto.chatGPT.ChatGPTMessageDTO;
 import com.bar.travelplanner.dto.chatGPT.ChatGPTRequestDTO;
 import com.bar.travelplanner.dto.ItineraryRequestDTO;
@@ -21,6 +20,8 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bar.travelplanner.utils.constants.Constants.*;
+
 @Service
 @Log4j2
 @RequiredArgsConstructor
@@ -28,19 +29,16 @@ public class ChatGPTRequestServiceImpl implements ChatGPTRequestService {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${OPENAI_API_KEY}") String openAiKey;
+    @Value("${OPENAI_API_KEY}")
+    private String openAiKey;
 
     @Override
     public String createAnswer(ItineraryRequestDTO itineraryRequestDTO) throws IOException, InterruptedException {
         ChatGPTRequestDTO chatGPTRequestDTO = createChatGPTRequestDTO(itineraryRequestDTO);
+        log.info("Sending request to ChatGPT: {}", chatGPTRequestDTO);
+        String requestBody = objectMapper.writeValueAsString(chatGPTRequestDTO);
 
-        log.info("----------AI_Request : " + chatGPTRequestDTO + "----------");
-
-        String body = objectMapper.writeValueAsString(chatGPTRequestDTO);
-
-        String response = sendChatGPTRequest(body);
-
-        return response;
+        return sendChatGPTRequest(requestBody);
     }
 
     @Override
@@ -49,20 +47,22 @@ public class ChatGPTRequestServiceImpl implements ChatGPTRequestService {
         messages.add(new ChatGPTMessageDTO("user", getChatGPTRequestMessage(itineraryRequestDTO)));
 
         return ChatGPTRequestDTO.builder()
-                .model(Constants.CHAT_COMPLETION)
-                .maxTokens(Constants.OPEN_AI_MAX_TOKENS)
-                .temperature(Constants.OPEN_AI_TEMPERATURE)
+                .model(CHAT_COMPLETION)
+                .maxTokens(OPEN_AI_MAX_TOKENS)
+                .temperature(OPEN_AI_TEMPERATURE)
                 .messages(messages)
                 .build();
     }
 
     @Override
-    public String sendChatGPTRequest(String body) throws InterruptedException, IOException {
+    public String sendChatGPTRequest(String requestBody) throws InterruptedException, IOException {
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.openai.com/v1/chat/completions"))
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(CHAT_COMPLETION_URL))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.AUTHORIZATION, openAiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
 
         return client.send(request, HttpResponse.BodyHandlers.ofString()).body();
     }
@@ -124,6 +124,6 @@ public class ChatGPTRequestServiceImpl implements ChatGPTRequestService {
                 "Ensure that each day has a 'day' field and a list of 'activities' with 'title', 'description', " +
                 "'start_time', 'end_time', and 'location' fields. Keep descriptions concise.\n";
 
-            return message;
+        return message;
     }
 }

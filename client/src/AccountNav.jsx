@@ -29,7 +29,7 @@ export default function AccountNav() {
                 My Profile
             </Link>
             <Link className={linkClasses('itineraries')} to={'/account/itineraries'}>
-                My Itineraries
+                Trip plans
             </Link>
         </nav>
     );

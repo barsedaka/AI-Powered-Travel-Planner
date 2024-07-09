@@ -6,6 +6,7 @@ import com.bar.travelplanner.dto.mapper.ItineraryResponseDTOMapper;
 import com.bar.travelplanner.entity.Itinerary;
 import com.bar.travelplanner.entity.User;
 import com.bar.travelplanner.exception.ResourceNotFoundException;
+import com.bar.travelplanner.factory.ItineraryFactory;
 import com.bar.travelplanner.repository.ItineraryRepository;
 import com.bar.travelplanner.service.ChatGPTRequestHandlerService;
 import com.bar.travelplanner.service.ItineraryService;
@@ -25,40 +26,27 @@ import java.util.stream.Collectors;
 public class ItineraryServiceImpl implements ItineraryService {
 
     private final ItineraryRepository itineraryRepository;
-
-    public final ModelMapper modelMapper;
-
     private final ChatGPTRequestHandlerService chatGPTRequestHandlerService;
     private final SecurityService securityService;
+    private final ItineraryFactory itineraryFactory;
 
-    private final ItineraryResponseDTOMapper itineraryResponseDTOMapper;
 
     @Override
     public ItineraryResponseDTO addItinerary(ItineraryRequestDTO itineraryRequestDTO) throws IOException, InterruptedException {
-
         User currentUser = securityService.getCurrentUser();
-        itineraryRequestDTO.setUser(currentUser);
+        Itinerary itinerary = itineraryFactory.createItinerary(itineraryRequestDTO, currentUser);
+        String tripPlan = chatGPTRequestHandlerService.generateTripPlan(itineraryRequestDTO);
+        itinerary.setTripPlan(tripPlan);
+        Itinerary savedItinerary = itineraryRepository.save(itinerary);
+        log.info("Itinerary created for user: {}", currentUser.getUsername());
 
-        Itinerary itinerary = modelMapper.map(itineraryRequestDTO, Itinerary.class);
-
-        String response = createChatGPTAnswer(itineraryRequestDTO);
-        log.info("Chat response" + response);
-        itinerary.setTripPlan(response);
-
-        itineraryRepository.save(itinerary);
-
-        return itineraryResponseDTOMapper.toItineraryResponseDTO(itinerary);
-    }
-
-    public String createChatGPTAnswer(ItineraryRequestDTO itineraryRequestDTO) throws IOException, InterruptedException {
-        return chatGPTRequestHandlerService.createAnswer(itineraryRequestDTO);
+        return itineraryFactory.createItineraryResponseDTO(savedItinerary);
     }
 
     @Override
     public ItineraryResponseDTO getItineraryById(Long id) {
-
         return itineraryRepository.findById(id)
-                .map(itineraryResponseDTOMapper::toItineraryResponseDTO)
+                .map(itineraryFactory::createItineraryResponseDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Itinerary not found with id: " + id));
 
     }
@@ -66,40 +54,34 @@ public class ItineraryServiceImpl implements ItineraryService {
     @Override
     public List<ItineraryResponseDTO> getAllItineraries() {
         User currentUser = securityService.getCurrentUser();
-
         List<Itinerary> itineraries = itineraryRepository.findAllItinerariesByUserId(currentUser.getId());
-        List<ItineraryResponseDTO> itineraryResponsDTOS = itineraries.stream()
-                .map(itineraryResponseDTOMapper::toItineraryResponseDTO)
-                .collect(Collectors.toList());
 
-        return itineraryResponsDTOS;
+        return itineraries.stream()
+                .map(itineraryFactory::createItineraryResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public ItineraryResponseDTO updateItinerary(ItineraryRequestDTO itineraryRequestDTO, Long id) throws IOException, InterruptedException {
-
+        log.info("Updating itinerary with id: {}", id);
         Itinerary itinerary = itineraryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Itinerary not found with id: " + id));
+        itineraryFactory.updateItinerary(itinerary, itineraryRequestDTO);
+        String tripPlan = chatGPTRequestHandlerService.generateTripPlan(itineraryRequestDTO);
+        itinerary.setTripPlan(tripPlan);
+        Itinerary savedItinerary = itineraryRepository.save(itinerary);
+        log.info("Itinerary updated successfully");
 
-        itinerary.setDestination(itineraryRequestDTO.getDestination());
-        itinerary.setActivityTypes(itineraryRequestDTO.getActivityTypes());
-        itinerary.setTripDuration(itineraryRequestDTO.getTripDuration());
-
-        String response = createChatGPTAnswer(itineraryRequestDTO);
-        itinerary.setTripPlan(response);
-
-        itineraryRepository.save(itinerary);
-
-        return itineraryResponseDTOMapper.toItineraryResponseDTO(itinerary);
+        return itineraryFactory.createItineraryResponseDTO(savedItinerary);
     }
 
     @Override
     public void deleteItinerary(Long id) {
-        Itinerary itinerary = itineraryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Itinerary not found with id: " + id));
-
+        log.info("Deleting itinerary with id: {}", id);
+        if (!itineraryRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Itinerary not found with id: " + id);
+        }
         itineraryRepository.deleteById(id);
+        log.info("Itinerary deleted successfully");
     }
-
-
 }

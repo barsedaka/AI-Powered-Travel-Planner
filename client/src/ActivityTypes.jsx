@@ -7,20 +7,33 @@ export default function ActivityTypes({selected, onChange}) {
         } else {
             onChange([...selected.filter(selectedName => selectedName !== name)])
         }
-
-        
     }
 
     return (
         <>
             <label className="border p-4 flex rounded-2xl gap-2 items-center cursor-pointer">
-                <input type="checkbox" checked={selected.includes("shopping")} name="shopping" onChange={handleCheckboxClick}/>
-                <span>Shopping</span>
+                <input type="checkbox" checked={selected.includes("Beaches")} name="Beaches" onChange={handleCheckboxClick}/>
+                <span>Beaches</span>
+            </label>
+
+            <label className="border p-4 flex rounded-2xl gap-2 items-center cursor-pointer">
+                <input type="checkbox" checked={selected.includes("CitySightseeing")} name="CitySightseeing" onChange={handleCheckboxClick}/>
+                <span>City sightseeing</span>
+            </label>
+
+            <label className="border p-4 flex rounded-2xl gap-2 items-center cursor-pointer">
+                <input type="checkbox" checked={selected.includes("OutdoorAdventures")} name="OutdoorAdventures" onChange={handleCheckboxClick}/>
+                <span>Outdoor adventures</span>
             </label>
 
             <label className="border p-4 flex rounded-2xl gap-2 items-center cursor-pointer">
                 <input type="checkbox" checked={selected.includes("nightlife")} name="nightlife" onChange={handleCheckboxClick}/>
                 <span>Nightlife</span>
+            </label>
+
+            <label className="border p-4 flex rounded-2xl gap-2 items-center cursor-pointer">
+                <input type="checkbox" checked={selected.includes("shopping")} name="shopping" onChange={handleCheckboxClick}/>
+                <span>Shopping</span>
             </label>
 
             <label className="border p-4 flex rounded-2xl gap-2 items-center cursor-pointer">

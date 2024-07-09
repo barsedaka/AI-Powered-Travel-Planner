@@ -19,9 +19,8 @@ public class ChatGPTRequestHandlerServiceImpl implements ChatGPTRequestHandlerSe
 
 
     @Override
-    public String createAnswer(ItineraryRequestDTO itineraryRequestDTO) throws IOException, InterruptedException {
+    public String generateTripPlan(ItineraryRequestDTO itineraryRequestDTO) throws IOException, InterruptedException {
         String response = chatGPTRequestService.createAnswer(itineraryRequestDTO);
-
         ChatGPTMessageDTO chatGPTMessageDTO = chatGPTResponseService.getMessageFromResponse(response);
 
         return chatGPTMessageDTO.getContent();

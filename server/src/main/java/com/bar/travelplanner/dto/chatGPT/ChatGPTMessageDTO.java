@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class ChatGPTMessageDTO {
 
     private String role;
-
     private String content;
 
     @Override

@@ -33,7 +33,6 @@ public class AuthServiceImpl implements AuthService {
         ));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         String token = jwtTokenProvider.generateToken(authentication);
 
         return userService.login(loginDTO, token);
@@ -42,13 +41,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String register(RegisterDTO registerDTO) {
         userService.addUser(registerDTO);
-
         log.info("user saved successfully!");
 
         return Constants.SUCCESSFULLY_REGISTERED_MESSAGE;
     }
-
-
-
-
 }

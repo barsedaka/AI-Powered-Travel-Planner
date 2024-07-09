@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getToken } from "./AuthService";
+import { getToken, isTokenExpired, refreshToken } from "./AuthService";
 
 const BASE_REST_API_URL = 'http://localhost:8080/api/itineraries';
 
@@ -10,7 +10,6 @@ axios.interceptors.request.use(function (config) {
     
     return config;
   }, function (error) {
-    // Do something with request error
     return Promise.reject(error);
   });
 

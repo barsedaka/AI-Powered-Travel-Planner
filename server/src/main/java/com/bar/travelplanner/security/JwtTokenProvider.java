@@ -22,14 +22,12 @@ public class JwtTokenProvider {
     public String generateToken(Authentication authentication){
         Date currentDate = new Date();
 
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setSubject(authentication.getName())
                 .setIssuedAt(currentDate)
                 .setExpiration(new Date(currentDate.getTime() + jwtExpirationDate))
                 .signWith(key())
                 .compact();
-
-        return token;
     }
 
     private Key key(){
